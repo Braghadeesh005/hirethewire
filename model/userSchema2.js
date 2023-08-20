@@ -48,6 +48,10 @@ path: {
     type: String, 
     required: true 
 },
+avatar: {
+    type: String,
+    required:true
+  },
 created: { 
     type: Date, 
     default: Date.now 

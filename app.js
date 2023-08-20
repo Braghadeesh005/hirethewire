@@ -13,6 +13,7 @@ app.use(require('./router/auth'));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 app.use('/products', express.static(path.join(__dirname, 'products')));
 
+
 //Rendering Client
 app.use(express.static("client/build"));
 app.get("/",function(req,res) {

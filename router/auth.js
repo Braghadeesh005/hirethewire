@@ -4,10 +4,10 @@ const bcrypt = require('bcryptjs')
 const cookieParser = require("cookie-parser");
 router.use(cookieParser());
 
+// Middlewares
 const authenticate = require("../middleware/authenticate");
 const sendEmail = require("../middleware/sendEmail");
 const upload = require('../middleware/upload');
-const upload1 = require('../middleware/productupload');
 
 //DB
 require('../db/conn');
@@ -17,6 +17,20 @@ const User1 = require('../model/userSchema1');
 const User2 = require('../model/userSchema2');
 const User3 = require('../model/userSchema3');
 
+//cloudinary
+const cloudinary = require('cloudinary').v2;
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_SECRET_KEY
+});
+
+
+
+
+
+
+//  ------------------------------- PAGES --------------------------------------------------------------
 
 //Logout page
 router.get("/logout", (req,res) => 
@@ -25,16 +39,6 @@ router.get("/logout", (req,res) =>
     res.clearCookie('jwtoken', {path: '/'});
     res.status(200).send("User Logout");
 });
-
-
-
-
-
-
-
-
-
-
 
 // Admin Login Page
 router.post('/adminsignin', async (req,res)=>{
@@ -177,6 +181,8 @@ router.post('/api/images', upload.single('image'), async (req, res) => {
       console.log(err);
   }
 
+  const result = await cloudinary.uploader.upload(req.file.path)
+
 
   const image = new User2({
     name: req.body.name,
@@ -189,7 +195,10 @@ router.post('/api/images', upload.single('image'), async (req, res) => {
     filename: req.file.filename,
     originalName: req.file.originalname,
     path: req.file.path,
+    avatar : result.secure_url
   });
+
+  
    const userimage = await image.save()
     if(userimage){
       console.log(image);
@@ -200,6 +209,7 @@ router.post('/api/images', upload.single('image'), async (req, res) => {
       console.log("failed to register");
           res.status(500).json({error: "failed to register"});
     };
+
 });
 
 
@@ -213,7 +223,29 @@ router.get('/api/images', (req, res) => {
     .catch((err) => {
       res.status(500).json({ success: false, error: err.message });
     });
+  
+      
 });
+
+// Get an employee by ID (Dynamic page)
+router.get('/api/employees/:id', async (req, res) => {
+  try {
+    const employee = await User2.findById(req.params.id);
+    res.json(employee);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch employee details' });
+  }
+});
+
+// // Route to get all employees after registration
+// router.get('/employees', async (req, res) => {
+//   try {
+//     const employees = await User2.find();
+//     res.json(employees);
+//   } catch (err) {
+//     res.status(500).json({ error: err.message });
+//   }
+// });
 
 // Employee Login Page
 
@@ -307,6 +339,10 @@ router.delete('/users/:id', (req, res) => {
     });
   });
 
+
+
+
+  
   //sending gmail
   router.post('/send-notification', (req, res) => {
     const email = req.body.email;
@@ -349,7 +385,7 @@ router.delete('/users/:id', (req, res) => {
 
 //Add Product
 
-router.post('/addproduct', upload1.single('image'), async (req, res) => {
+router.post('/addproduct', upload.single('image'), async (req, res) => {
 
   const { name, type, core, weight, price, discount, quantity } = req.body;
  
@@ -371,6 +407,8 @@ router.post('/addproduct', upload1.single('image'), async (req, res) => {
     console.log(err);
   }
 
+  const result = await cloudinary.uploader.upload(req.file.path)
+
   const image = new User3({
     name: req.body.name,
     type: req.body.type,
@@ -382,6 +420,7 @@ router.post('/addproduct', upload1.single('image'), async (req, res) => {
     filename: req.file.filename,
     originalName: req.file.originalname,
     path: req.file.path,
+    avatar : result.secure_url
   });
    const userimage = await image.save()
     if(userimage){
